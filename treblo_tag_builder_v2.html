@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treblo Tag Builder v2 — ACS</title>
+<style>
+:root{--bg:#0f1115;--panel:#161a21;--line:#262c36;--text:#d5d9e0;--dim:#8a93a2;--acc:#c98d3a;--core:#5b8fd6;--ng:#c96565;--ok:#5fa876}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;font-size:14px;line-height:1.6}
+.wrap{max-width:980px;margin:0 auto;padding:24px 20px 60px}
+h1{font-size:18px;font-weight:600;margin:0 0 4px}
+.sub{color:var(--dim);font-size:12px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;color:var(--dim);font-weight:600;margin:0 0 4px;letter-spacing:.04em}
+.card .lead{font-size:12px;color:var(--dim);margin-bottom:10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{border:1px solid var(--line);border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer;user-select:none;background:#12151b;color:var(--dim);transition:.12s}
+.tag:hover{border-color:var(--acc)}
+.tag.on{background:var(--acc);border-color:var(--acc);color:#111}
+.tag.avoid.on{background:var(--ng);border-color:var(--ng);color:#fff}
+.tag.locked{background:#1a2432;border-color:#3a5578;color:#bcd4f0;cursor:default}
+.acsbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#acsBtn{background:var(--core);border-color:var(--core);color:#0b0d11;font-weight:700;font-size:15px;padding:10px 22px}
+#acsBtn.off{background:#12151b;color:var(--dim);border-color:var(--line);font-weight:600}
+.acsnote{font-size:12px;color:var(--dim)}
+.variants{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.vbtn{border:1px solid var(--line);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;background:#12151b;color:var(--dim)}
+.vbtn.on{border-color:var(--core);color:#bcd4f0;background:#141b25}
+textarea{width:100%;min-height:70px;background:#0b0d11;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:12px;font-family:ui-monospace,Menlo,monospace;font-size:13px;resize:vertical}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+button{background:#1c2029;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:8px 14px;cursor:pointer;font-size:13px}
+button:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);color:#111;border-color:var(--acc);font-weight:600}
+.count{color:var(--dim);font-size:12px;margin-left:auto}
+.warn{color:var(--acc)}.ok{color:var(--ok)}
+.note{font-size:12px;color:var(--dim);margin-top:8px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Treblo Tag Builder v2</h1>
+<div class="sub">核＝ACS（A Computer System trying to feel feelings）。ACSを土台に置き、その上へ質感・雰囲気を装飾として足す。掲載タグはすべて Treblo の辞書（4,159語）に完全一致で実在することを確認済み。</div>
+
+<div class="card">
+  <h2>ACS — 核</h2>
+  <div class="lead">機械であること（mechanical / glitch / computer gaze）と、感情に手を伸ばそうとすること（emotional / longing / rhodes piano）の緊張。片方だけだと成立しない。</div>
+  <div class="acsbar">
+    <button id="acsBtn">ACS</button>
+    <span class="acsnote" id="acsState"></span>
+  </div>
+  <div class="variants">
+    <span class="vbtn" data-v="0">標準</span>
+    <span class="vbtn" data-v="1">機械寄り</span>
+    <span class="vbtn" data-v="2">感情寄り</span>
+  </div>
+  <div class="tags" id="acsTags" style="margin-top:12px"></div>
+</div>
+
+<div class="split">
+  <div class="card">
+    <h2>質感（装飾）</h2>
+    <div class="lead">核を邪魔しない範囲で。2〜3個まで。</div>
+    <div class="tags" id="texture"></div>
+  </div>
+  <div class="card">
+    <h2>雰囲気（装飾）</h2>
+    <div class="lead">回の舞台に合わせる。2〜3個まで。</div>
+    <div class="tags" id="mood"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>世界観（任意）</h2>
+  <div class="lead">SF寄りに振りたい回だけ。入れすぎるとlofiから外れる。</div>
+  <div class="tags" id="world"></div>
+</div>
+
+<div class="card">
+  <h2>避ける（Trebloの「避ける」欄へ）</h2>
+  <div class="tags" id="avoid"></div>
+</div>
+
+<div class="card">
+  <h2>出力：音（スタイル）欄</h2>
+  <textarea id="outTags" readonly></textarea>
+  <div class="row">
+    <button class="primary" id="copyTags">コピー</button>
+    <span class="count" id="cnt"></span>
+  </div>
+  <h2 style="margin-top:14px">出力：避ける欄</h2>
+  <textarea id="outAvoid" readonly style="min-height:48px"></textarea>
+  <div class="row">
+    <button id="copyAvoid">コピー</button>
+    <button id="reset">リセット</button>
+  </div>
+  <div class="note">目安は合計8〜12個。Trebloは少数を混ぜるほうが効く。貼り付けが効かない場合は検索欄に1語ずつ入れる。</div>
+</div>
+</div>
+
+<script>
+const ACS=[
+  ["lo-fi hip hop","instrumental","mechanical","glitch","computer gaze","emotional","longing","rhodes piano"],
+  ["lo-fi hip hop","instrumental","mechanical","glitch","idm","computer gaze","digital","emotional","rhodes piano"],
+  ["lo-fi hip hop","instrumental","mechanical","computer gaze","emotional","longing","bittersweet","rhodes piano","warm"]
+];
+const TEXTURE=["tape loops","cassette","vintage","analog synthesizer","electric piano","drum machine","field recording","reverb","drone","8bit","chiptune","warm","cold","slow","minimal","minimalistic","hypnotic","repetitive"];
+const MOOD=["calm","nocturnal","lonely","introspective","nostalgic","melancholic","bittersweet","sad","atmospheric","ethereal","late night lo-fi","rain"];
+const WORLD=["sci-fi","space ambient","futuristic","abstract","experimental","hauntology","vaporwave","dark ambient","trip hop","chillhop","downtempo"];
+const AVOID=["male vocalist","female vocalist","vocal","energetic","aggressive","heavy","loud","fast","upbeat","party","dance","edm","rock","metal","punk","trap","pop","anthemic","epic","dramatic","noise","chaotic","dissonant","happy","uplifting"];
+
+const $=s=>document.querySelector(s);
+let acsOn=true, variant=0;
+let selT=new Set(), selM=new Set(), selW=new Set();
+let selA=new Set(["male vocalist","female vocalist","vocal","energetic","aggressive","fast","upbeat"]);
+
+function mk(id,list,set,cls){
+  const el=$(id); el.innerHTML="";
+  list.forEach(t=>{
+    const s=document.createElement("span");
+    s.className="tag "+(cls||"")+(set.has(t)?" on":"");
+    s.textContent=t;
+    s.onclick=()=>{ set.has(t)?set.delete(t):set.add(t); s.classList.toggle("on"); build(); };
+    el.appendChild(s);
+  });
+}
+function drawACS(){
+  const el=$("#acsTags"); el.innerHTML="";
+  if(!acsOn){ el.innerHTML='<span class="acsnote">ACS OFF — 核なし。装飾だけの一般的なlofiになる。</span>'; return; }
+  ACS[variant].forEach(t=>{
+    const s=document.createElement("span");
+    s.className="tag locked"; s.textContent=t; el.appendChild(s);
+  });
+}
+function build(){
+  const arr = acsOn ? [...ACS[variant]] : [];
+  [selT,selM,selW].forEach(s=>s.forEach(t=>{ if(!arr.includes(t)) arr.push(t); }));
+  $("#outTags").value=arr.join(", ");
+  $("#outAvoid").value=[...selA].join(", ");
+  const n=arr.length;
+  $("#cnt").textContent=`${n} tags`+(n>12?" — 多い。装飾を削る":"")+(n<6?" — 少ない":"");
+  $("#cnt").className="count "+(n>12||n<6?"warn":"ok");
+  $("#acsState").textContent = acsOn ? "核ON — この8〜9語は固定" : "核OFF";
+  $("#acsBtn").className = acsOn ? "" : "off";
+}
+$("#acsBtn").onclick=()=>{ acsOn=!acsOn; drawACS(); build(); };
+document.querySelectorAll(".vbtn").forEach(b=>{
+  b.onclick=()=>{ variant=+b.dataset.v; document.querySelectorAll(".vbtn").forEach(x=>x.classList.remove("on")); b.classList.add("on"); acsOn=true; drawACS(); build(); };
+});
+document.querySelector('.vbtn[data-v="0"]').classList.add("on");
+
+mk("#texture",TEXTURE,selT);
+mk("#mood",MOOD,selM);
+mk("#world",WORLD,selW);
+mk("#avoid",AVOID,selA,"avoid");
+drawACS(); build();
+
+$("#copyTags").onclick=()=>navigator.clipboard.writeText($("#outTags").value);
+$("#copyAvoid").onclick=()=>navigator.clipboard.writeText($("#outAvoid").value);
+$("#reset").onclick=()=>{
+  acsOn=true; variant=0; selT.clear(); selM.clear(); selW.clear();
+  selA=new Set(["male vocalist","female vocalist","vocal","energetic","aggressive","fast","upbeat"]);
+  document.querySelectorAll(".vbtn").forEach(x=>x.classList.remove("on"));
+  document.querySelector('.vbtn[data-v="0"]').classList.add("on");
+  mk("#texture",TEXTURE,selT); mk("#mood",MOOD,selM); mk("#world",WORLD,selW); mk("#avoid",AVOID,selA,"avoid");
+  drawACS(); build();
+};
+</script>
+</body>
+</html>
