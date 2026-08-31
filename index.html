@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -20,6 +21,8 @@ h1{font-size:18px;font-weight:600;margin:0 0 4px}
 .tag.on{background:var(--acc);border-color:var(--acc);color:#111}
 .tag.avoid.on{background:var(--ng);border-color:var(--ng);color:#fff}
 .tag.locked{background:#1a2432;border-color:#3a5578;color:#bcd4f0;cursor:default}
+.grp{font-size:11px;color:var(--dim);letter-spacing:.06em;margin:12px 0 5px}
+.grp:first-child{margin-top:0}
 .acsbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 #acsBtn{background:var(--core);border-color:var(--core);color:#0b0d11;font-weight:700;font-size:15px;padding:10px 22px}
 #acsBtn.off{background:#12151b;color:var(--dim);border-color:var(--line);font-weight:600}
@@ -57,6 +60,18 @@ button.primary{background:var(--acc);color:#111;border-color:var(--acc);font-wei
     <span class="vbtn" data-v="2">感情寄り</span>
   </div>
   <div class="tags" id="acsTags" style="margin-top:12px"></div>
+</div>
+
+<div class="card">
+  <h2>楽器</h2>
+  <div class="lead">核の rhodes piano に重ねる楽器。1〜2個まで。3個以上入れるとバンド編成に寄って lofi の密度から外れる。すべて辞書に完全一致で実在。</div>
+  <div id="instr"></div>
+</div>
+
+<div class="card">
+  <h2>展開を止める ★</h2>
+  <div class="lead">曲が終盤で一度収束してから締めに入る挙動（outro化）を抑えるための2語。終止感が気になる回では両方入れる。辞書に完全一致で実在。</div>
+  <div class="tags" id="flat"></div>
 </div>
 
 <div class="split">
@@ -106,6 +121,17 @@ const ACS=[
   ["lo-fi hip hop","instrumental","mechanical","glitch","idm","computer gaze","digital","emotional","rhodes piano"],
   ["lo-fi hip hop","instrumental","mechanical","computer gaze","emotional","longing","bittersweet","rhodes piano","warm"]
 ];
+const INSTR={
+ "鍵盤":["electric piano","wurlitzer electric piano","upright piano","tack piano","harpsichord","celesta","hammond organ","organ","mellotron"],
+ "弦（撥弦）":["acoustic guitar","electric guitar","classical guitar","slide guitar","lap steel guitar","pedal steel guitar","resonator guitar","12 string guitar","banjo","mandolin","ukulele","harp","sitar","koto"],
+ "弦（擦弦）":["violin","viola","cello","double bass","strings","string quartet"],
+ "低音":["acoustic bass","electric bass"],
+ "木管":["flute","clarinet","bass clarinet","oboe","bassoon","shakuhachi","harmonica","whistle"],
+ "金管・サックス":["trumpet","flugelhorn","trombone","french horn","tenor saxophone"],
+ "打・鍵盤打":["vibraphone","marimba","xylophone","glockenspiel","chimes","music box","timpani","tabla","tambourine","snare drum"],
+ "電子・リズム":["synthesizer","analog synthesizer","theremin","drum machine","drumless"]
+};
+const FLAT=["background","looping"];
 const TEXTURE=["tape loops","cassette","vintage","analog synthesizer","electric piano","drum machine","field recording","reverb","drone","8bit","chiptune","warm","cold","slow","minimal","minimalistic","hypnotic","repetitive"];
 const MOOD=["calm","nocturnal","lonely","introspective","nostalgic","melancholic","bittersweet","sad","atmospheric","ethereal","late night lo-fi","rain"];
 const WORLD=["sci-fi","space ambient","futuristic","abstract","experimental","hauntology","vaporwave","dark ambient","trip hop","chillhop","downtempo"];
@@ -113,7 +139,7 @@ const AVOID=["male vocalist","female vocalist","vocal","energetic","aggressive",
 
 const $=s=>document.querySelector(s);
 let acsOn=true, variant=0;
-let selT=new Set(), selM=new Set(), selW=new Set();
+let selI=new Set(), selF=new Set(), selT=new Set(), selM=new Set(), selW=new Set();
 let selA=new Set(["male vocalist","female vocalist","vocal","energetic","aggressive","fast","upbeat"]);
 
 function mk(id,list,set,cls){
@@ -126,6 +152,24 @@ function mk(id,list,set,cls){
     el.appendChild(s);
   });
 }
+function mkGroups(id,groups,set){
+  const el=$(id); el.innerHTML="";
+  Object.keys(groups).forEach(g=>{
+    const h=document.createElement("div");
+    h.className="grp"; h.textContent=g;
+    el.appendChild(h);
+    const box=document.createElement("div");
+    box.className="tags";
+    groups[g].forEach(t=>{
+      const s=document.createElement("span");
+      s.className="tag"+(set.has(t)?" on":"");
+      s.textContent=t;
+      s.onclick=()=>{ set.has(t)?set.delete(t):set.add(t); s.classList.toggle("on"); build(); };
+      box.appendChild(s);
+    });
+    el.appendChild(box);
+  });
+}
 function drawACS(){
   const el=$("#acsTags"); el.innerHTML="";
   if(!acsOn){ el.innerHTML='<span class="acsnote">ACS OFF — 核なし。装飾だけの一般的なlofiになる。</span>'; return; }
@@ -136,12 +180,13 @@ function drawACS(){
 }
 function build(){
   const arr = acsOn ? [...ACS[variant]] : [];
-  [selT,selM,selW].forEach(s=>s.forEach(t=>{ if(!arr.includes(t)) arr.push(t); }));
+  [selI,selF,selT,selM,selW].forEach(s=>s.forEach(t=>{ if(!arr.includes(t)) arr.push(t); }));
   $("#outTags").value=arr.join(", ");
   $("#outAvoid").value=[...selA].join(", ");
   const n=arr.length;
-  $("#cnt").textContent=`${n} tags`+(n>12?" — 多い。装飾を削る":"")+(n<6?" — 少ない":"");
-  $("#cnt").className="count "+(n>12||n<6?"warn":"ok");
+  const ni=selI.size;
+  $("#cnt").textContent=`${n} tags`+(ni>2?` / 楽器${ni}個 — 多い`:"")+(n>12?" — 多い。装飾を削る":"")+(n<6?" — 少ない":"");
+  $("#cnt").className="count "+(n>12||n<6||ni>2?"warn":"ok");
   $("#acsState").textContent = acsOn ? "核ON — この8〜9語は固定" : "核OFF";
   $("#acsBtn").className = acsOn ? "" : "off";
 }
@@ -151,6 +196,8 @@ document.querySelectorAll(".vbtn").forEach(b=>{
 });
 document.querySelector('.vbtn[data-v="0"]').classList.add("on");
 
+mkGroups("#instr",INSTR,selI);
+mk("#flat",FLAT,selF);
 mk("#texture",TEXTURE,selT);
 mk("#mood",MOOD,selM);
 mk("#world",WORLD,selW);
@@ -160,11 +207,11 @@ drawACS(); build();
 $("#copyTags").onclick=()=>navigator.clipboard.writeText($("#outTags").value);
 $("#copyAvoid").onclick=()=>navigator.clipboard.writeText($("#outAvoid").value);
 $("#reset").onclick=()=>{
-  acsOn=true; variant=0; selT.clear(); selM.clear(); selW.clear();
+  acsOn=true; variant=0; selI.clear(); selF.clear(); selT.clear(); selM.clear(); selW.clear();
   selA=new Set(["male vocalist","female vocalist","vocal","energetic","aggressive","fast","upbeat"]);
   document.querySelectorAll(".vbtn").forEach(x=>x.classList.remove("on"));
   document.querySelector('.vbtn[data-v="0"]').classList.add("on");
-  mk("#texture",TEXTURE,selT); mk("#mood",MOOD,selM); mk("#world",WORLD,selW); mk("#avoid",AVOID,selA,"avoid");
+  mkGroups("#instr",INSTR,selI); mk("#flat",FLAT,selF); mk("#texture",TEXTURE,selT); mk("#mood",MOOD,selM); mk("#world",WORLD,selW); mk("#avoid",AVOID,selA,"avoid");
   drawACS(); build();
 };
 </script>
