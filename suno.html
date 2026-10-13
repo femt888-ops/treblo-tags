@@ -1,0 +1,624 @@
+<meta charset="utf-8">
+<title>ACS Prompt Builder</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f2efe8;
+    --panel:#fbfaf7;
+    --panel-2:#e9e5db;
+    --ink:#1c1a16;
+    --ink-2:#5c574c;
+    --ink-3:#8a8375;
+    --line:#d6d0c3;
+    --accent:#a85a2a;
+    --accent-soft:#f0ddcd;
+    --ok:#3f6b4a;
+    --warn:#9a6a10;
+    --warn-bg:#f7ecd2;
+    --bad:#a32f28;
+    --bad-bg:#f8ddda;
+    --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --jp:"Zen Kaku Gothic New", system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg:#14161a;
+      --panel:#1c1f25;
+      --panel-2:#252932;
+      --ink:#e8e4da;
+      --ink-2:#a8a294;
+      --ink-3:#736d60;
+      --line:#333843;
+      --accent:#d98b4a;
+      --accent-soft:#3a2c1e;
+      --ok:#7fb48c;
+      --warn:#d8ae5a;
+      --warn-bg:#3a2f16;
+      --bad:#e08a80;
+      --bad-bg:#3d1f1c;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#14161a;
+    --panel:#1c1f25;
+    --panel-2:#252932;
+    --ink:#e8e4da;
+    --ink-2:#a8a294;
+    --ink-3:#736d60;
+    --line:#333843;
+    --accent:#d98b4a;
+    --accent-soft:#3a2c1e;
+    --ok:#7fb48c;
+    --warn:#d8ae5a;
+    --warn-bg:#3a2f16;
+    --bad:#e08a80;
+    --bad-bg:#3d1f1c;
+  }
+
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--jp);
+    font-size:15px;
+    line-height:1.7;
+    padding-block:28px 64px;
+    padding-left:16px;
+    padding-right:16px;
+  }
+  .wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px;}
+
+  header h1{
+    font-family:var(--mono);
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:.02em;
+    margin:0;
+    text-wrap:balance;
+  }
+  header p{margin:6px 0 0;color:var(--ink-2);font-size:13px;}
+
+  .core{
+    font-family:var(--mono);
+    font-size:12.5px;
+    color:var(--ink-2);
+    background:var(--panel-2);
+    border-left:3px solid var(--accent);
+    padding:10px 12px;
+    overflow-x:auto;
+    white-space:nowrap;
+  }
+
+  section{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:16px;
+  }
+  h2{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin:0 0 12px;
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  h2 .hint{
+    font-family:var(--jp);
+    letter-spacing:0;
+    text-transform:none;
+    font-size:12px;
+    font-weight:400;
+    color:var(--ink-3);
+  }
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{
+    font-family:var(--mono);
+    font-size:12.5px;
+    line-height:1.3;
+    padding:7px 11px;
+    border:1px solid var(--line);
+    background:var(--bg);
+    color:var(--ink-2);
+    cursor:pointer;
+    border-radius:2px;
+    transition:background .12s, border-color .12s, color .12s;
+  }
+  .chip:hover{border-color:var(--accent);color:var(--ink);}
+  .chip[aria-pressed="true"]{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--ink);
+    font-weight:500;
+  }
+  .chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .chip .jp{font-family:var(--jp);font-size:11px;color:var(--ink-3);margin-left:7px;}
+  .chip[aria-pressed="true"] .jp{color:var(--ink-2);}
+
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+  .sub{margin-bottom:14px;}
+  .sub:last-child{margin-bottom:0;}
+  .sub h3{
+    font-family:var(--mono);
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.1em;
+    color:var(--ink-2);
+    margin:0 0 8px;
+  }
+  .sub h3 em{font-style:normal;color:var(--ink-3);font-weight:400;letter-spacing:0;font-family:var(--jp);font-size:11.5px;}
+
+  .toggles{display:flex;flex-direction:column;gap:9px;}
+  .tg{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--ink-2);cursor:pointer;}
+  .tg input{margin-top:5px;accent-color:var(--accent);flex:none;}
+  .tg code{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);display:block;}
+
+  .out{
+    font-family:var(--mono);
+    font-size:13px;
+    line-height:1.65;
+    background:var(--bg);
+    border:1px solid var(--line);
+    padding:13px;
+    white-space:pre-wrap;
+    word-break:break-word;
+    min-height:70px;
+    -webkit-user-select:all;
+    user-select:all;
+  }
+  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:11px;}
+  button.act{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:.05em;
+    padding:8px 15px;
+    border:1px solid var(--accent);
+    background:var(--accent);
+    color:#fff;
+    cursor:pointer;
+    border-radius:2px;
+  }
+  :root[data-theme="dark"] button.act, :root:not([data-theme="light"]) button.act{color:#14161a;}
+  @media (prefers-color-scheme: light){ :root:not([data-theme="dark"]) button.act{color:#fff;} }
+  button.act.ghost{background:transparent;color:var(--accent);}
+  button.act:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .count{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-left:auto;font-variant-numeric:tabular-nums;}
+
+  .flag{
+    font-size:12.5px;
+    padding:9px 12px;
+    border-left:3px solid;
+    margin-top:10px;
+  }
+  .flag.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--ink);}
+  .flag.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--ink);}
+  .flag b{font-family:var(--mono);font-size:12px;}
+
+  table{border-collapse:collapse;font-size:12.5px;width:100%;min-width:520px;}
+  .scroll{overflow-x:auto;}
+  th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top;}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-2);background:var(--panel-2);font-weight:600;}
+  td{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);}
+  td:first-child{color:var(--ink-3);}
+  tr.on td{background:var(--accent-soft);color:var(--ink);}
+
+  #tip{
+    position:fixed;
+    z-index:50;
+    max-width:300px;
+    background:var(--ink);
+    color:var(--bg);
+    font-family:var(--jp);
+    font-size:12.5px;
+    line-height:1.55;
+    padding:7px 10px;
+    border-radius:3px;
+    pointer-events:none;
+    box-shadow:0 3px 14px rgba(0,0,0,.28);
+  }
+  #tip[hidden]{display:none!important;}
+  #tip .en{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    opacity:.6;
+    margin-bottom:2px;
+  }
+
+  footer{font-size:12px;color:var(--ink-3);line-height:1.8;}
+  footer code{font-family:var(--mono);font-size:11.5px;}
+  @media (max-width:420px){ .core{font-size:11px;} }
+</style>
+
+<div class="wrap">
+
+<header>
+  <h1>ACS Prompt Builder</h1>
+  <p>レインアンドコーヒールーム / Suno 用。核は固定、上に装飾だけを足す。</p>
+</header>
+
+<div class="core">Experimental Lo-fi, hip hop, [質感] , [リード] , [定型] , [状態] , A computer system trying to feel feelings , [装飾] , [空間] , [反復] , [テンポ]</div>
+
+<section>
+  <h2>1 · 回タイプ <span class="hint">状態スロットが自動で決まる</span></h2>
+  <div class="chips" id="ep"></div>
+</section>
+
+<section>
+  <h2>2 · 質感スロット <span class="hint">1つ選ぶ</span></h2>
+  <div class="chips" id="tex"></div>
+</section>
+
+<section>
+  <h2>3 · リード楽器 <span class="hint">任意。質感に重ねる 1つまで</span></h2>
+  <div class="chips" id="lead"></div>
+</section>
+
+<section>
+  <h2>4 · 定型ブロック</h2>
+  <div class="toggles" id="fix"></div>
+</section>
+
+<section>
+  <h2>5 · 装飾パレット <span class="hint">A から1つ ＋ B か C から1つ。多くて2語</span></h2>
+  <div class="grid2">
+    <div>
+      <div class="sub"><h3>A · モード <em>明るさの最大レバー</em></h3><div class="chips" id="mode"></div></div>
+      <div class="sub"><h3>B · ボイシング <em>和音の色</em></h3><div class="chips" id="voice"></div></div>
+    </div>
+    <div>
+      <div class="sub"><h3>C · 進行の動き</h3><div class="chips" id="move"></div></div>
+      <div class="sub"><h3>D · 終止 <em>C と二重取りしない</em></h3><div class="chips" id="res"></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>6 · 空間 <span class="hint">任意</span></h2>
+  <div class="chips" id="space"></div>
+</section>
+
+<section>
+  <h2>出力</h2>
+  <div class="out" id="out"></div>
+  <div class="row">
+    <button class="act" id="copy">プロンプトをコピー</button>
+    <button class="act ghost" id="reset">全部クリア</button>
+    <label class="count" for="limit" style="margin-left:auto">上限 <input id="limit" type="number" min="0" step="10" placeholder="未設定" style="width:5.5em;font:inherit;background:transparent;color:inherit;border:1px solid var(--ink-3);border-radius:4px;padding:2px 4px"> 字</label>
+    <span class="count" id="count" style="margin-left:12px"></span>
+  </div>
+  <div id="flags"></div>
+</section>
+
+<section>
+  <h2>構成タグ <span class="hint">歌詞欄に貼る。回タイプで自動選択</span></h2>
+  <div class="out" id="struct"></div>
+  <div class="row">
+    <button class="act" id="copyStruct">構成タグをコピー</button>
+    <span class="count" id="structName"></span>
+  </div>
+  <div class="scroll" style="margin-top:14px">
+    <table id="structTable"></table>
+  </div>
+</section>
+
+<footer>
+  禁止語 <code>sparse / minimal / weightless / meditative / bouncy / punchy</code> が混ざると下に警告が出る。<br>
+  変化のつけ方は <b>主旋律楽器 &gt; キー・旋法 &gt; 空間</b> の順で振る。1曲ごとに全部変えると回として散る。<br>
+  選択内容はこのブラウザに保存される。別の端末では引き継がれない。
+</footer>
+
+</div>
+
+<div id="tip" hidden></div>
+
+<script>
+const GLOSS = {
+  "warped vinyl-cracked chords":"歪んだレコードの、ひび割れた和音",
+  "glitched Rhodes chords":"音飛びするローズピアノの和音",
+  "hollow FM bell":"芯のない、空洞のようなFMベル",
+  "fractured celesta echo":"砕けたチェレスタの残響",
+  "aged cassette Rhodes":"劣化したカセット音質のローズピアノ",
+  "distant AM radio tone":"遠くのAMラジオのような音色",
+  "low-bit pad drone":"低ビットのパッドが鳴り続ける持続音",
+  "muted felt piano":"フェルトで覆った、くぐもった柔らかいピアノ",
+  "lo-fi Wurlitzer fragment":"粗い音質のウーリッツァーの断片",
+  "soft degraded piano":"劣化した、柔らかいピアノ",
+  "hazy chorused guitar":"霞んだ、コーラスのかかったギター",
+  "faint static-laced melody":"砂嵐ノイズ混じりの、かすかな旋律",
+  "dusty tape-saturated keys":"埃っぽく、テープで飽和した鍵盤",
+  "decayed string resonance":"減衰していく弦の共鳴",
+  "bit-crushed synth lead":"ビットを潰したシンセの主旋律",
+  "faint cosmic reverb":"かすかな、宇宙的な残響",
+  "vast empty resonance":"広大で空虚な響き",
+  "signal from deep space":"深宇宙から届く信号",
+
+  "detuned electric piano lead":"音程がわずかにずれたエレピの主旋律",
+  "dusty rhodes keys lead":"埃っぽいローズピアノの主旋律",
+  "muted plucked synth lead":"弱音で弾かれたシンセの主旋律",
+  "soft square wave lead":"柔らかい矩形波の主旋律",
+  "lo-fi vibraphone lead":"粗い音質のヴィブラフォンの主旋律",
+  "hollow woodwind-like synth lead":"木管のような空洞感のあるシンセの主旋律",
+  "warm analog pad lead":"温かいアナログパッドの主旋律",
+  "music-box synth lead":"オルゴール風シンセの主旋律",
+  "tape-warped guitar lead":"テープで歪んだギターの主旋律",
+  "sine wave lead":"正弦波（倍音のない純音）の主旋律",
+
+  "lydian":"リディアン旋法。4度が上がり、浮遊感が出る",
+  "mixolydian":"ミクソリディアン旋法。長調だが7度が下がり懐かしさが出る",
+  "dorian":"ドリアン旋法。短調だが6度が上がり、物憂さに一滴の希望が残る",
+  "aeolian":"エオリアン旋法（自然短音階）。標準的な哀感",
+  "phrygian":"フリジアン旋法。2度が下がり、不穏で冷たい",
+
+  "major seventh and ninth chords, warm open voicings":"メジャー7th・9thの和音を、広く開いた配置で温かく鳴らす",
+  "add9 / sus2, bright open":"add9・sus2。3度をぼかした明るく開いた響き",
+  "quartal voicings":"4度を積み重ねた和音。長短が曖昧で無色・浮遊",
+  "minor ninth chords":"マイナー9thの和音。翳りがありつつ広がる",
+  "diminished / minor seventh flat five":"ディミニッシュ／m7♭5。不安定で暗い",
+
+  "plagal cadence feel (IV→I), gentle resolve":"変格終止（IV→I）。教会的に、穏やかに着地する",
+  "jazzy ii–V–I, warm":"ジャズの定番進行 ii–V–I。温かく、きちんと解決する",
+  "pedal point, held bass":"ベースを同じ音で保持したまま上の和音だけ動かす。浮遊・無色",
+  "circular chord pattern":"同じ数個の和音を円環状に回す。始点と終点が曖昧になる",
+  "descending progression":"和音が少しずつ低い方へ降りていく。沈む・諦め",
+
+  "suspended, unresolved":"宙吊りのまま解決させない。lofiの無限ループの核",
+  "resolves softly":"柔らかく着地させる。温かさ・安らぎ",
+
+  "dry close room":"残響のない、近い部屋",
+  "cavernous reverb":"洞窟のような深く広い残響",
+  "short metallic reverb":"短く金属的な残響",
+  "underwater muffled space":"水中のようにこもった空間",
+
+  "barely emotional, steady and mechanical":"ほとんど感情がなく、一定で機械的",
+  "drowsy and unresolved, rain-soaked":"まどろみ、解決せず、雨に濡れた",
+  "slow build to emotional collapse":"ゆっくり積み上げ、感情が決壊する",
+
+  "occasional digital glitch sounds":"時折デジタルな音飛びが混じる",
+  "robotic but emotional":"機械的だが、感情がある",
+  "robotic":"機械的（感情の語を外す）",
+  "drums in the background":"ドラムを後ろに下げる",
+  "hypnotic loop":"催眠的に同じ形を繰り返す",
+  "steady BPM":"BPMを一定に保つ"
+};
+
+const tip = document.getElementById("tip");
+function showTip(el, en){
+  const jp = GLOSS[en];
+  if(!jp) return;
+  tip.innerHTML = '<span class="en"></span>';
+  tip.firstChild.textContent = en;
+  tip.append(jp);
+  tip.hidden = false;
+  const r = el.getBoundingClientRect();
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = r.left, y = r.top - h - 8;
+  if(y < 6) y = r.bottom + 8;
+  if(x + w > innerWidth - 8) x = innerWidth - w - 8;
+  if(x < 8) x = 8;
+  tip.style.left = x + "px";
+  tip.style.top = y + "px";
+}
+function hideTip(){ tip.hidden = true; }
+addEventListener("scroll", hideTip, {passive:true});
+
+function bindTip(el, en){
+  el.addEventListener("mouseenter", ()=>showTip(el, en));
+  el.addEventListener("mouseleave", hideTip);
+  el.addEventListener("focus", ()=>showTip(el, en));
+  el.addEventListener("blur", hideTip);
+  if(GLOSS[en]) el.title = GLOSS[en];
+}
+
+const EPISODES = [
+  {id:"normal", jp:"通常回", state:"barely emotional, steady and mechanical", col:"通常"},
+  {id:"rain",   jp:"雨回",   state:"drowsy and unresolved, rain-soaked",       col:"雨"},
+  {id:"recall", jp:"回想回", state:"slow build to emotional collapse",         col:"弱"},
+  {id:"drift",  jp:"揺れ",   state:"barely emotional, steady and mechanical",  col:"揺れ"},
+  {id:"addsub", jp:"たしひき", state:"barely emotional, steady and mechanical", col:"たしひき"}
+];
+
+const TEXTURES = [
+  "warped vinyl-cracked chords","glitched Rhodes chords","hollow FM bell","fractured celesta echo",
+  "aged cassette Rhodes","distant AM radio tone","low-bit pad drone","muted felt piano",
+  "lo-fi Wurlitzer fragment","soft degraded piano","hazy chorused guitar","faint static-laced melody",
+  "dusty tape-saturated keys","decayed string resonance","bit-crushed synth lead",
+  "faint cosmic reverb","vast empty resonance","signal from deep space"
+];
+
+const LEADS = [
+  "detuned electric piano lead","dusty rhodes keys lead","muted plucked synth lead","soft square wave lead",
+  "lo-fi vibraphone lead","hollow woodwind-like synth lead","warm analog pad lead","music-box synth lead",
+  "tape-warped guitar lead","sine wave lead"
+];
+
+const FIXED = [
+  {id:"glitch", on:true,  label:"グリッチ音", text:"occasional digital glitch sounds"},
+  {id:"robo",   on:true,  label:"ロボットだが感情的", text:"robotic but emotional", alt:{label:"感情を外す（robotic のみ）", text:"robotic"}},
+  {id:"drums",  on:true,  label:"ドラムを後退させる", text:"drums in the background"},
+  {id:"loop",   on:false, label:"催眠的な反復", text:"hypnotic loop"},
+  {id:"tempo",  on:true,  label:"テンポ維持", text:"steady BPM"}
+];
+
+const MODES = [
+  ["lydian","明 浮遊・夢見心地"],["mixolydian","明〜中 懐かしい"],["dorian","中 物憂い＋希望一滴"],
+  ["aeolian","暗 標準的な哀感"],["phrygian","暗 不穏・冷たい"]
+];
+const VOICINGS = [
+  ["major seventh and ninth chords, warm open voicings","明"],["add9 / sus2, bright open","明〜中"],
+  ["quartal voicings","中 無色"],["minor ninth chords","中〜暗"],["diminished / minor seventh flat five","暗"]
+];
+const MOVES = [
+  ["plagal cadence feel (IV→I), gentle resolve","明 あえて解決"],["jazzy ii–V–I, warm","明〜中"],
+  ["pedal point, held bass","中 浮遊"],["circular chord pattern","中 着地させない"],
+  ["descending progression","暗 沈む・回想向き"]
+];
+const RESOL = [["suspended, unresolved","着地させない"],["resolves softly","着地させる"]];
+const SPACES = [["dry close room","近接・乾いた"],["cavernous reverb","洞窟"],["short metallic reverb","金属・短い"],["underwater muffled space","水中"]];
+
+const STRUCT = {
+  normal: ["[Instrumental]","[Intro]","[Build]","[Groove]","[Variation]","[Fade]"],
+  rain:   ["[Instrumental]","[Rain Begin]","[Beat Enters Under Rain]","[Rain Intensifies]","[Beat Continues Beneath]","[Rain Tapers]"],
+  recall: ["[Instrumental]","[Fragment]","[Reform]","[Loss]","[Reform Larger]","[Disperse]"],
+  drift:  ["[Instrumental]","[Drift]","[Pulse]","[Drift Deepens]","[Pulse Returns]","[Dissolve]"],
+  addsub: ["[Instrumental]","[Single Element]","[Layer Added]","[Full Texture]","[Layer Removed]","[Single Element Returns]"]
+};
+const BANNED = ["sparse","minimal","weightless","meditative","bouncy","punchy"];
+const CIRCULAR = ["suspended, unresolved","circular chord pattern"];
+
+const S = {ep:"normal", tex:null, lead:null, mode:null, voice:null, move:null, res:null, space:null,
+           fix:Object.fromEntries(FIXED.map(f=>[f.id,f.on]))};
+
+try{ const v = localStorage.getItem("acs-builder"); if(v) Object.assign(S, JSON.parse(v)); }catch(e){}
+(function(){ const li=document.getElementById("limit"); if(li){ if(S.limit) li.value=S.limit; li.addEventListener("input",()=>{ S.limit=parseInt(li.value,10)||0; save(); render(); }); } })();
+const save = ()=>{ try{ localStorage.setItem("acs-builder", JSON.stringify(S)); }catch(e){} };
+
+function chips(el, items, key, exclusive){
+  el.innerHTML = "";
+  items.forEach(it=>{
+    const val = Array.isArray(it) ? it[0] : (it.id || it);
+    const main = Array.isArray(it) ? it[0] : (it.jp || it);
+    const note = Array.isArray(it) ? it[1] : "";
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip"; b.dataset.val = val;
+    b.innerHTML = main.replace(/&/g,"&amp;").replace(/</g,"&lt;") + (note ? '<span class="jp">'+note+'</span>' : "");
+    b.setAttribute("aria-pressed", String(S[key] === val));
+    bindTip(b, (!Array.isArray(it) && it.state) ? it.state : val);
+    b.addEventListener("click", ()=>{
+      hideTip();
+      S[key] = (S[key] === val && !exclusive) ? null : val;
+      save(); render();
+    });
+    el.appendChild(b);
+  });
+}
+
+function toggles(){
+  const el = document.getElementById("fix");
+  el.innerHTML = "";
+  FIXED.forEach(f=>{
+    const lab = document.createElement("label");
+    lab.className = "tg";
+    const cb = document.createElement("input");
+    cb.type="checkbox"; cb.id="fix-"+f.id; cb.checked = !!S.fix[f.id];
+    cb.addEventListener("change", ()=>{ S.fix[f.id]=cb.checked; save(); render(); });
+    const sp = document.createElement("span");
+    const shown = (!cb.checked && f.alt) ? f.alt : f;
+    sp.innerHTML = f.label + '<code></code>';
+    sp.querySelector("code").textContent = shown.text;
+    bindTip(sp.querySelector("code"), shown.text);
+    lab.append(cb, sp);
+    el.appendChild(lab);
+  });
+}
+
+function build(){
+  const ep = EPISODES.find(e=>e.id===S.ep) || EPISODES[0];
+  const p = ["Experimental Lo-fi","hip hop"];
+  if(S.tex) p.push(S.tex);
+  if(S.lead) p.push(S.lead);
+  if(S.fix.glitch) p.push("occasional digital glitch sounds");
+  p.push(S.fix.robo ? "robotic but emotional" : "robotic");
+  if(S.fix.drums) p.push("drums in the background");
+  p.push(ep.state);
+  p.push("A computer system trying to feel feelings");
+  if(S.mode) p.push(S.mode);
+  if(S.voice) p.push(S.voice);
+  if(S.move) p.push(S.move);
+  if(S.res) p.push(S.res);
+  if(S.space) p.push(S.space);
+  if(S.fix.loop) p.push("hypnotic loop");
+  if(S.fix.tempo) p.push("steady BPM");
+  return p.join(", ");
+}
+
+function checks(text){
+  const out = [];
+  const low = text.toLowerCase();
+  const hit = BANNED.filter(w=>new RegExp("\\b"+w+"\\b").test(low));
+  if(hit.length) out.push(["bad","禁止語が入っている： <b>"+hit.join(" / ")+"</b>"]);
+  if(!S.tex) out.push(["warn","質感スロットが未選択。核が裸のまま出る"]);
+  if(!S.mode && (S.voice || S.move)) out.push(["warn","A のモードが未選択。B・C だけだと明暗が Suno 任せになる"]);
+  if(S.voice && S.move) out.push(["warn","B と C を同時に取っている。装飾は A ＋ どちらか1つまで"]);
+  if(S.move && S.res) out.push(["warn","C と D の二重取り。終止は進行と重なる"]);
+  const dup = CIRCULAR.filter(w=>text.includes(w));
+  if(dup.length>1) out.push(["warn","同義の宙吊り語が重複： <b>"+dup.join(" / ")+"</b>"]);
+  if(S.limit && text.length > S.limit) out.push(["bad","上限 "+S.limit+" 字を "+(text.length-S.limit)+" 字超えている。後ろ（テンポ指定）から切られる"]);
+  if(text.split(",").length > 22) out.push(["warn","語数が多い。効きが薄れるので足さずに削る"]);
+  return out;
+}
+
+function structTable(){
+  const t = document.getElementById("structTable");
+  const rows = ["キー曲構成","1","2","3","4","5"];
+  let html = "<tr><th>行</th>" + EPISODES.map(e=>'<th>'+e.col+'</th>').join("") + "</tr>";
+  for(let i=0;i<6;i++){
+    html += "<tr"+(i===0?"":"")+"><td>"+rows[i]+"</td>" +
+      EPISODES.map(e=>'<td'+(e.id===S.ep?' class="on"':'')+'>'+STRUCT[e.id][i]+'</td>').join("") + "</tr>";
+  }
+  t.innerHTML = html;
+  [...t.querySelectorAll("tr")].forEach(tr=>{
+    if([...tr.children].some(c=>c.classList.contains("on"))) tr.classList.add("on");
+  });
+}
+
+function render(){
+  hideTip();
+  chips(document.getElementById("ep"), EPISODES, "ep", true);
+  chips(document.getElementById("tex"), TEXTURES, "tex");
+  chips(document.getElementById("lead"), LEADS, "lead");
+  chips(document.getElementById("mode"), MODES, "mode");
+  chips(document.getElementById("voice"), VOICINGS, "voice");
+  chips(document.getElementById("move"), MOVES, "move");
+  chips(document.getElementById("res"), RESOL, "res");
+  chips(document.getElementById("space"), SPACES, "space");
+  toggles();
+
+  const text = build();
+  document.getElementById("out").textContent = text;
+  document.getElementById("count").textContent = text.split(",").length + " 語 / " + text.length + " 字";
+
+  const f = document.getElementById("flags");
+  f.innerHTML = checks(text).map(([k,m])=>'<div class="flag '+k+'">'+m+'</div>').join("");
+
+  const ep = EPISODES.find(e=>e.id===S.ep) || EPISODES[0];
+  document.getElementById("struct").textContent = STRUCT[ep.id].join("\n");
+  document.getElementById("structName").textContent = ep.jp + " の構成";
+  structTable();
+}
+
+function copyText(txt, btn, done){
+  const revert = btn.textContent;
+  const ok = ()=>{ btn.textContent = done; setTimeout(()=>btn.textContent=revert, 1400); };
+  try{
+    navigator.clipboard.writeText(txt).then(ok).catch(()=>{ selectFallback(txt, btn, revert); });
+  }catch(e){ selectFallback(txt, btn, revert); }
+}
+function selectFallback(txt, btn, revert){
+  const el = btn.closest("section").querySelector(".out");
+  const r = document.createRange(); r.selectNodeContents(el);
+  const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+  btn.textContent = "選択した。⌘C でコピー";
+  setTimeout(()=>btn.textContent=revert, 2600);
+}
+
+document.getElementById("copy").addEventListener("click", e=>copyText(build(), e.currentTarget, "コピーした"));
+document.getElementById("copyStruct").addEventListener("click", e=>{
+  const ep = EPISODES.find(x=>x.id===S.ep) || EPISODES[0];
+  copyText(STRUCT[ep.id].join("\n"), e.currentTarget, "コピーした");
+});
+document.getElementById("reset").addEventListener("click", ()=>{
+  Object.assign(S, {ep:"normal", tex:null, lead:null, mode:null, voice:null, move:null, res:null, space:null,
+                    fix:Object.fromEntries(FIXED.map(f=>[f.id,f.on]))});
+  save(); render();
+});
+
+render();
+</script>
