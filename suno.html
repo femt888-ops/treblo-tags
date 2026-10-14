@@ -552,6 +552,26 @@ function checks(text){
   if(dup.length>1) out.push(["warn","同義の宙吊り語が重複： <b>"+dup.join(" / ")+"</b>"]);
   if(S.limit && text.length > S.limit) out.push(["bad","上限 "+S.limit+" 字を "+(text.length-S.limit)+" 字超えている。後ろ（テンポ指定）から切られる"]);
   if(text.split(",").length > 22) out.push(["warn","語数が多い。効きが薄れるので足さずに削る"]);
+  // 矛盾：感情の強さ
+  if(/robotic but emotional/.test(low) && /barely emotional/.test(low))
+    out.push(["warn","感情指定が矛盾： <b>robotic but emotional</b> と <b>barely emotional</b>。どちらかに揃える（固定の「感情を外す」か回の種類を変える）"]);
+  // 矛盾：明暗
+  const tone = n => !n ? 0 : (n.startsWith("暗") ? -1 : (n.startsWith("明") && !n.startsWith("明〜") ? 1 : 0));
+  const noteOf = (arr,v) => { const f = arr.find(a=>a[0]===v); return f ? f[1] : ""; };
+  const tones = [["A",noteOf(MODES,S.mode)],["B",noteOf(VOICINGS,S.voice)],["C",noteOf(MOVES,S.move)]]
+    .map(([k,n])=>[k,tone(n)]).filter(([k,t])=>t!==0);
+  if(tones.some(t=>t[1]>0) && tones.some(t=>t[1]<0))
+    out.push(["warn","明暗が逆向き： "+tones.map(t=>t[0]+(t[1]>0?"=明":"=暗")).join(" / ")+"。Suno がどちらに寄せるか読めない"]);
+  // 音飛び・巻き戻り系の重ね
+  const GLITCHY = ["glitch","bit-crushed","fractured","warped","degraded"];
+  const g = GLITCHY.filter(w=>low.includes(w));
+  if(g.length >= 2)
+    out.push(["warn","崩し系の語が重なっている： <b>"+g.join(" / ")+"</b>。途中で頭に戻る・音が飛ぶ現象が出やすい可能性（推測・未検証）。1つに絞る"]);
+  if(low.includes("glitch") && low.includes("hypnotic loop"))
+    out.push(["warn","<b>glitch</b> と <b>hypnotic loop</b> の併用。巻き戻りのような繰り返しを誘う可能性（推測・未検証）"]);
+  // 同語の重複
+  const steady = (low.match(/\bsteady\b/g)||[]).length;
+  if(steady >= 2) out.push(["warn","<b>steady</b> が "+steady+" 回出ている。テンポ指定か状態語のどちらかで足りる"]);
   return out;
 }
 
