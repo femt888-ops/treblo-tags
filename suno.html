@@ -198,6 +198,7 @@
     margin-top:10px;
   }
   .flag.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--ink);}
+  .flag.note{background:transparent;border-style:dashed;color:var(--ink-3);}
   .flag.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--ink);}
   .flag b{font-family:var(--mono);font-size:12px;}
 
@@ -244,7 +245,7 @@
   <p>レインアンドコーヒールーム / Suno 用。核は固定、上に装飾だけを足す。</p>
 </header>
 
-<div class="core">Experimental Lo-fi, hip hop, [質感] , [リード] , [定型] , [状態] , A computer system trying to feel feelings , [装飾] , [空間] , [反復] , [テンポ]</div>
+<div class="core">Experimental Lo-fi, hip hop, [質感] , [旋律] , [背景] , [定型] , [状態] , A computer system trying to feel feelings , [装飾] , [空間] , [仕上げ] , [反復] , [テンポ]</div>
 
 <section>
   <h2>1 · 回タイプ <span class="hint">状態スロットが自動で決まる</span></h2>
@@ -257,8 +258,13 @@
 </section>
 
 <section>
-  <h2>3 · リード楽器 <span class="hint">任意。質感に重ねる 1つまで</span></h2>
+  <h2>3 · 旋律 <span class="hint">任意。旋律を弾く楽器は全体で1つまで</span></h2>
   <div class="chips" id="lead"></div>
+</section>
+
+<section>
+  <h2>3b · 背景の層 <span class="hint">任意。旋律の後ろで鳴る下地を1つ</span></h2>
+  <div class="chips" id="bed"></div>
 </section>
 
 <section>
@@ -283,6 +289,11 @@
 <section>
   <h2>6 · 空間 <span class="hint">任意</span></h2>
   <div class="chips" id="space"></div>
+</section>
+
+<section>
+  <h2>7 · 仕上げ（ミックス） <span class="hint">任意。2つまで。音の質感と低音・残響の作り</span></h2>
+  <div class="chips" id="mix"></div>
 </section>
 
 <section>
@@ -312,6 +323,8 @@
 <footer>
   禁止語 <code>sparse / minimal / weightless / meditative / bouncy / punchy</code> が混ざると下に警告が出る。<br>
   変化のつけ方は <b>主旋律楽器 &gt; キー・旋法 &gt; 空間</b> の順で振る。1曲ごとに全部変えると回として散る。<br>
+  楽器は数ではなく役割で数える：和音（質感）・旋律・背景の層を各1つまで。旋律を弾く楽器が2つ並ぶと警告が出る。<br>
+  Suno が提案するスタイル文に <code>calm / healing</code>（癒し系）や <code>field recordings</code>（自然音）が入っていたら、ACS と世界設定に反するので採らない。<br>
   選択内容はこのブラウザに保存される。別の端末では引き継がれない。
 </footer>
 
@@ -349,6 +362,7 @@ const GLOSS = {
   "warm analog pad lead":"温かいアナログパッドの主旋律",
   "music-box synth lead":"オルゴール風シンセの主旋律",
   "tape-warped guitar lead":"テープで歪んだギターの主旋律",
+  "soft bit-crushed synth lead":"柔らかく、ビットを潰したシンセの主旋律",
   "sine wave lead":"正弦波（倍音のない純音）の主旋律",
 
   "lydian":"リディアン旋法。4度が上がり、浮遊感が出る",
@@ -386,7 +400,20 @@ const GLOSS = {
   "robotic":"機械的（感情の語を外す）",
   "drums in the background":"ドラムを後ろに下げる",
   "hypnotic loop":"催眠的に同じ形を繰り返す",
-  "steady BPM":"BPMを一定に保つ"
+  "steady BPM":"BPMを一定に保つ",
+  "metronomic drum machine":"メトロノームのように正確なドラムマシン。機械らしさをリズムに持たせる",
+  "robotic groove":"ロボットのようにかっちりしたノリ",
+  "unhurried pulse":"急がない、ゆったりした拍",
+  "warm ambient pads":"温かい背景のパッド。旋律の後ろで和音を薄く敷く",
+  "tape-warped guitar textures":"テープで揺れたギターの質感。旋律ではなく下地として鳴る",
+  "soft analog drone":"柔らかいアナログシンセの持続音",
+  "vinyl crackle":"レコードのパチパチ音",
+  "cassette wow and flutter":"カセットテープの回転むらによる、音程のゆっくりした揺れ",
+  "90s cassette texture":"90年代のカセットテープの質感",
+  "lo-fi saturation":"ほどよく歪ませて音を太く・丸くする",
+  "smooth sub-bass warmth":"なめらかで温かい超低音",
+  "soft sidechain compression":"キックに合わせて他の音が軽く沈む、ゆるい揺れ",
+  "airy reverb tails":"空気のように抜ける残響の尾"
 };
 
 const tip = document.getElementById("tip");
@@ -436,15 +463,18 @@ const TEXTURES = [
 const LEADS = [
   "detuned electric piano lead","dusty rhodes keys lead","muted plucked synth lead","soft square wave lead",
   "lo-fi vibraphone lead","hollow woodwind-like synth lead","warm analog pad lead","music-box synth lead",
-  "tape-warped guitar lead","sine wave lead"
+  "tape-warped guitar lead","sine wave lead","soft bit-crushed synth lead"
 ];
 
 const FIXED = [
   {id:"glitch", on:true,  label:"グリッチ音", text:"occasional digital glitch sounds"},
   {id:"robo",   on:true,  label:"ロボットだが感情的", text:"robotic but emotional", alt:{label:"感情を外す（robotic のみ）", text:"robotic"}},
   {id:"drums",  on:true,  label:"ドラムを後退させる", text:"drums in the background"},
+  {id:"machine",on:false, label:"ドラムを機械にする", text:"metronomic drum machine"},
+  {id:"groove", on:false, label:"ノリを機械にする", text:"robotic groove"},
   {id:"loop",   on:false, label:"催眠的な反復", text:"hypnotic loop"},
-  {id:"tempo",  on:true,  label:"テンポ維持", text:"steady BPM"}
+  {id:"tempo",  on:true,  label:"テンポ維持", text:"steady BPM"},
+  {id:"pulse",  on:false, label:"急がない拍", text:"unhurried pulse"}
 ];
 
 const MODES = [
@@ -461,6 +491,11 @@ const MOVES = [
   ["descending progression","暗 沈む・回想向き"]
 ];
 const RESOL = [["suspended, unresolved","着地させない"],["resolves softly","着地させる"]];
+const BEDS = [["warm ambient pads","温かい背景のパッド"],["tape-warped guitar textures","テープで揺れたギターの質感"],["soft analog drone","柔らかいアナログの持続音"]];
+const MELODIC_TEX = ["bit-crushed synth lead","faint static-laced melody"];
+const MIXES = [["vinyl crackle","レコードの針音"],["90s cassette texture","90年代カセット"],["lo-fi saturation","軽い歪み"],
+  ["smooth sub-bass warmth","温かい超低音"],["soft sidechain compression","ゆるい揺れ"],["airy reverb tails","抜ける残響"],
+  ["cassette wow and flutter","テープの音程の揺れ"]];
 const SPACES = [["dry close room","近接・乾いた"],["cavernous reverb","洞窟"],["short metallic reverb","金属・短い"],["underwater muffled space","水中"]];
 
 const STRUCT = {
@@ -473,7 +508,7 @@ const STRUCT = {
 const BANNED = ["sparse","minimal","weightless","meditative","bouncy","punchy"];
 const CIRCULAR = ["suspended, unresolved","circular chord pattern"];
 
-const S = {ep:"normal", tex:null, lead:null, mode:null, voice:null, move:null, res:null, space:null,
+const S = {ep:"normal", tex:null, lead:null, mode:null, voice:null, move:null, res:null, space:null, bed:null, mix:[],
            fix:Object.fromEntries(FIXED.map(f=>[f.id,f.on]))};
 
 try{ const v = localStorage.getItem("acs-builder"); if(v) Object.assign(S, JSON.parse(v)); }catch(e){}
@@ -494,6 +529,25 @@ function chips(el, items, key, exclusive){
     b.addEventListener("click", ()=>{
       hideTip();
       S[key] = (S[key] === val && !exclusive) ? null : val;
+      save(); render();
+    });
+    el.appendChild(b);
+  });
+}
+
+function multiChips(el, items, key, max){
+  el.innerHTML = "";
+  if(!Array.isArray(S[key])) S[key] = [];
+  items.forEach(([val, note])=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip"; b.dataset.val = val;
+    b.innerHTML = val.replace(/&/g,"&amp;").replace(/</g,"&lt;") + '<span class="jp">'+note+'</span>';
+    b.setAttribute("aria-pressed", String(S[key].includes(val)));
+    bindTip(b, val);
+    b.addEventListener("click", ()=>{
+      hideTip();
+      const i = S[key].indexOf(val);
+      if(i>=0) S[key].splice(i,1); else S[key].push(val);
       save(); render();
     });
     el.appendChild(b);
@@ -524,9 +578,12 @@ function build(){
   const p = ["Experimental Lo-fi","hip hop"];
   if(S.tex) p.push(S.tex);
   if(S.lead) p.push(S.lead);
+  if(S.bed) p.push(S.bed);
   if(S.fix.glitch) p.push("occasional digital glitch sounds");
   p.push(S.fix.robo ? "robotic but emotional" : "robotic");
   if(S.fix.drums) p.push("drums in the background");
+  if(S.fix.machine) p.push("metronomic drum machine");
+  if(S.fix.groove) p.push("robotic groove");
   p.push(ep.state);
   p.push("A computer system trying to feel feelings");
   if(S.mode) p.push(S.mode);
@@ -534,8 +591,10 @@ function build(){
   if(S.move) p.push(S.move);
   if(S.res) p.push(S.res);
   if(S.space) p.push(S.space);
+  (S.mix||[]).forEach(m=>p.push(m));
   if(S.fix.loop) p.push("hypnotic loop");
   if(S.fix.tempo) p.push("steady BPM");
+  if(S.fix.pulse) p.push("unhurried pulse");
   return p.join(", ");
 }
 
@@ -568,7 +627,17 @@ function checks(text){
   if(g.length >= 2)
     out.push(["warn","崩し系の語が重なっている： <b>"+g.join(" / ")+"</b>。途中で頭に戻る・音が飛ぶ現象が出やすい可能性（推測・未検証）。1つに絞る"]);
   if(low.includes("glitch") && low.includes("hypnotic loop"))
-    out.push(["warn","<b>glitch</b> と <b>hypnotic loop</b> の併用。巻き戻りのような繰り返しを誘う可能性（推測・未検証）"]);
+    out.push(["note","参考：<b>glitch</b> と <b>hypnotic loop</b> の併用。曲が頭に戻るような現象が出たら、まずどちらかを外して試す（未検証の推測。Suno の好み読み取りでは毎回入る組み合わせ）"]);
+  // 役割の重なり：旋律を弾く楽器が2つ
+  if(S.lead && MELODIC_TEX.includes(S.tex))
+    out.push(["warn","旋律を弾く楽器が2つある： <b>"+S.tex+"</b> と <b>"+S.lead+"</b>。どちらかを外すか、質感を和音・下地のものに替える（旋律がぶつかるとバンド編成に寄る）"]);
+  // 仕上げの数
+  if((S.mix||[]).length > 2) out.push(["warn","仕上げを "+S.mix.length+" つ選んでいる。2つまでにしないと、核の語の効きが薄れる"]);
+  if((S.mix||[]).includes("vinyl crackle") && (S.mix||[]).includes("90s cassette texture"))
+    out.push(["warn","<b>vinyl crackle</b> と <b>90s cassette texture</b> はどちらも古い媒体の質感。片方で足りる"]);
+  // 機械の語の重ね
+  if(S.fix.machine && S.fix.groove && /robotic but emotional|\brobotic\b/.test(low))
+    out.push(["warn","機械の語が3つ重なっている（drum machine / robotic groove / robotic）。感情側の語が負けやすい"]);
   // 同語の重複
   const steady = (low.match(/\bsteady\b/g)||[]).length;
   if(steady >= 2) out.push(["warn","<b>steady</b> が "+steady+" 回出ている。テンポ指定か状態語のどちらかで足りる"]);
@@ -599,6 +668,8 @@ function render(){
   chips(document.getElementById("move"), MOVES, "move");
   chips(document.getElementById("res"), RESOL, "res");
   chips(document.getElementById("space"), SPACES, "space");
+  multiChips(document.getElementById("mix"), MIXES, "mix");
+  chips(document.getElementById("bed"), BEDS, "bed");
   toggles();
 
   const text = build();
@@ -635,7 +706,7 @@ document.getElementById("copyStruct").addEventListener("click", e=>{
   copyText(STRUCT[ep.id].join("\n"), e.currentTarget, "コピーした");
 });
 document.getElementById("reset").addEventListener("click", ()=>{
-  Object.assign(S, {ep:"normal", tex:null, lead:null, mode:null, voice:null, move:null, res:null, space:null,
+  Object.assign(S, {ep:"normal", tex:null, lead:null, mode:null, voice:null, move:null, res:null, space:null, bed:null, mix:[],
                     fix:Object.fromEntries(FIXED.map(f=>[f.id,f.on]))});
   save(); render();
 });
