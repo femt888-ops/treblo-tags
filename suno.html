@@ -199,6 +199,8 @@
     margin-top:10px;
   }
   .flag.warn{background:var(--warn-bg);border-color:var(--warn);color:var(--ink);}
+  .tg.locked{opacity:.45;cursor:not-allowed;}
+  .tg .lockmsg{font-style:normal;font-size:.85em;margin-left:4px;}
   .flag.note{background:transparent;border-style:dashed;color:var(--ink-3);}
   .flag.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--ink);}
   .flag b{font-family:var(--mono);font-size:12px;}
@@ -431,6 +433,8 @@ const GLOSS = {
   "barely emotional, steady and mechanical":"ほとんど感情がなく、一定で機械的",
   "drowsy and unresolved, rain-soaked":"まどろみ、解決せず、雨に濡れた",
   "slow build to emotional collapse":"ゆっくり積み上げ、感情が決壊する",
+  "drifting in and out, unsteady pulse":"寄せては離れる。拍が揺らぐ",
+  "layers entering and leaving one by one":"音の層が一つずつ足され、一つずつ抜けていく",
 
   "occasional digital glitch sounds":"時折デジタルな音飛びが混じる",
   "robotic but emotional":"機械的だが、感情がある",
@@ -494,8 +498,8 @@ const EPISODES = [
   {id:"normal", jp:"通常回", state:"barely emotional, steady and mechanical", col:"通常"},
   {id:"rain",   jp:"雨回",   state:"drowsy and unresolved, rain-soaked",       col:"雨"},
   {id:"recall", jp:"回想回", state:"slow build to emotional collapse",         col:"弱"},
-  {id:"drift",  jp:"揺れ",   state:"barely emotional, steady and mechanical",  col:"揺れ"},
-  {id:"addsub", jp:"たしひき", state:"barely emotional, steady and mechanical", col:"たしひき"}
+  {id:"drift",  jp:"揺れ",   state:"drifting in and out, unsteady pulse",      col:"揺れ"},
+  {id:"addsub", jp:"たしひき", state:"layers entering and leaving one by one",  col:"たしひき"}
 ];
 
 const TEXTURES = [
@@ -610,10 +614,12 @@ function toggles(){
     lab.className = "tg";
     const cb = document.createElement("input");
     cb.type="checkbox"; cb.id="fix-"+f.id; cb.checked = !!S.fix[f.id];
+    const locked = (f.id==="tempo" && S.ep==="drift");   // 揺れ回は拍を揺らすので、テンポ固定は選べない
+    if(locked){ cb.checked = false; cb.disabled = true; lab.classList.add("locked"); }
     cb.addEventListener("change", ()=>{ S.fix[f.id]=cb.checked; explain((!cb.checked && f.alt) ? f.alt.text : f.text); save(); render(); });
     const sp = document.createElement("span");
     const shown = (!cb.checked && f.alt) ? f.alt : f;
-    sp.innerHTML = f.label + '<code></code>';
+    sp.innerHTML = f.label + (locked ? '<em class="lockmsg">（揺れ回では使えない）</em>' : '') + '<code></code>';
     sp.querySelector("code").textContent = shown.text;
     bindTip(sp.querySelector("code"), shown.text);
     lab.append(cb, sp);
@@ -641,7 +647,7 @@ function build(){
   if(S.space) p.push(S.space);
   (S.mix||[]).forEach(m=>p.push(m));
   if(S.fix.loop) p.push("hypnotic loop");
-  if(S.fix.tempo) p.push("steady BPM");
+  if(S.fix.tempo && S.ep!=="drift") p.push("steady BPM");
   if(S.fix.pulse) p.push("unhurried pulse");
   return p.join(", ");
 }
